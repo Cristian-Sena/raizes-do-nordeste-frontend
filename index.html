@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raízes do Nordeste - Pedido Digital</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Barra de simulação de multicanalidade (App / Totem / Web) -->
+  <div class="barra-canais" role="region" aria-label="Seletor de Canal de Atendimento">
+    <span>Canal de Acesso:</span>
+    <div class="grupo-botoes-canal">
+      <button type="button" class="btn-canal ativo" data-canal="app" onclick="selecionarCanal('app')">App Mobile</button>
+      <button type="button" class="btn-canal" data-canal="totem" onclick="selecionarCanal('totem')">Totem Loja</button>
+      <button type="button" class="btn-canal" data-canal="web" onclick="selecionarCanal('web')">Web Desktop</button>
+    </div>
+  </div>
+
+  <!-- Cabeçalho Principal -->
+  <header class="topo">
+    <div class="container topo-conteudo">
+      <div class="marca">
+        <h1>Raízes do Nordeste</h1>
+        <p id="subtitulo-canal">Atendimento via Aplicativo Mobile</p>
+      </div>
+
+      <div class="controles-topo">
+        <div class="seletor-unidade">
+          <label for="select-unidade">Unidade:</label>
+          <select id="select-unidade" onchange="alterarUnidade()">
+            <option value="recife">Recife - Boa Viagem</option>
+            <option value="fortaleza">Fortaleza - Aldeota</option>
+            <option value="salvador">Salvador - Pituba</option>
+          </select>
+        </div>
+
+        <button type="button" class="btn-secundario" id="btn-area-cliente" onclick="abrirModalConta()">
+          Entrar / Fidelidade
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Banner de Promoção e Fidelidade -->
+  <section class="banner-promo">
+    <div class="container banner-flex">
+      <div>
+        <strong>Campanha Raízes:</strong> Use o cupom <code>NORDESTE10</code> para 10% de desconto ou acumule 1 ponto a cada R$ 1,00 gasto.
+      </div>
+      <div id="resumo-pontos-topo" class="badge-pontos">
+        Visitante (Faça login para pontuar)
+      </div>
+    </div>
+  </section>
+
+  <!-- Área Principal -->
+  <main class="container layout-principal">
+    
+    <!-- Coluna do Cardápio -->
+    <section class="secao-cardapio">
+      <div class="cabecalho-cardapio">
+        <h2>Cardápio da Unidade</h2>
+        <div class="filtros-categoria" id="filtros-categoria">
+          <button type="button" class="btn-filtro ativo" onclick="filtrarCategoria('Todos', this)">Todos</button>
+          <button type="button" class="btn-filtro" onclick="filtrarCategoria('Pratos', this)">Pratos</button>
+          <button type="button" class="btn-filtro" onclick="filtrarCategoria('Lanches', this)">Lanches</button>
+          <button type="button" class="btn-filtro" onclick="filtrarCategoria('Sobremesas', this)">Sobremesas</button>
+          <button type="button" class="btn-filtro" onclick="filtrarCategoria('Bebidas', this)">Bebidas</button>
+        </div>
+      </div>
+
+      <div id="info-unidade-ativa" class="alerta-unidade"></div>
+      <div id="lista-produtos" class="grid-produtos"></div>
+    </section>
+
+    <!-- Coluna do Carrinho e Finalização -->
+    <aside class="painel-pedido">
+      <h2>Seu Pedido</h2>
+
+      <!-- Tipo de recebimento (Oculta entrega no modo Totem) -->
+      <div class="bloco-recebimento" id="bloco-tipo-entrega">
+        <label>Como deseja receber?</label>
+        <div class="opcoes-entrega">
+          <label><input type="radio" name="tipoEntrega" value="retirada" checked onchange="atualizarResumoCarrinho()"> Retirada no Balcão</label>
+          <label id="opcao-delivery"><input type="radio" name="tipoEntrega" value="entrega" onchange="atualizarResumoCarrinho()"> Entrega (Delivery)</label>
+        </div>
+      </div>
+
+      <div id="campo-endereco" class="campo-form oculto">
+        <label for="input-endereco">Endereço de Entrega *</label>
+        <input type="text" id="input-endereco" placeholder="Rua, número e bairro">
+      </div>
+
+      <!-- Itens do carrinho -->
+      <div id="itens-carrinho" class="lista-carrinho">
+        <p class="carrinho-vazio">Nenhum item adicionado ao pedido.</p>
+      </div>
+
+      <!-- Cupom de desconto -->
+      <div class="bloco-cupom">
+        <input type="text" id="input-cupom" placeholder="Cupom (ex: NORDESTE10)">
+        <button type="button" class="btn-secundario" onclick="aplicarCupom()">Aplicar</button>
+      </div>
+      <p id="msg-cupom" class="msg-feedback"></p>
+
+      <!-- Resgate de fidelidade -->
+      <div class="bloco-fidelidade-carrinho" id="box-resgate-fidelidade">
+        <p><strong>Fidelidade:</strong> <span id="saldo-pontos-carrinho">0</span> pts disponíveis</p>
+        <button type="button" class="btn-outline" onclick="resgatarRecompensa()">
+          Resgatar Bolo de Rolo (50 pts)
+        </button>
+      </div>
+
+      <!-- Totais -->
+      <div class="resumo-valores">
+        <div class="linha-valor"><span>Subtotal:</span> <span id="valor-subtotal">R$ 0,00</span></div>
+        <div class="linha-valor"><span>Taxa de Entrega:</span> <span id="valor-entrega">R$ 0,00</span></div>
+        <div class="linha-valor"><span>Desconto:</span> <span id="valor-desconto">- R$ 0,00</span></div>
+        <div class="linha-valor total"><span>Total:</span> <span id="valor-total">R$ 0,00</span></div>
+      </div>
+
+      <!-- Dados mínimos e Consentimento LGPD -->
+      <div class="bloco-checkout-lgpd">
+        <div class="campo-form">
+          <label for="input-cpf-pedido">CPF na nota / Fidelidade (opcional)</label>
+          <input type="text" id="input-cpf-pedido" maxlength="11" placeholder="Somente 11 números">
+        </div>
+
+        <label class="checkbox-lgpd">
+          <input type="checkbox" id="check-lgpd-pedido">
+          <span>
+            Concordo com o tratamento dos meus dados para processamento deste pedido e acúmulo de pontos, conforme a
+            <a href="#" onclick="abrirModalLGPD(event)">Política de Privacidade (LGPD)</a>. *
+          </span>
+        </label>
+      </div>
+
+      <div class="campo-form">
+        <label for="select-pagamento">Forma de Pagamento (Integração Externa)</label>
+        <select id="select-pagamento">
+          <option value="pix">Pix (Gateway Externo)</option>
+          <option value="credito">Cartão de Crédito (Gateway Externo)</option>
+          <option value="falha">Simular Recusa da Operadora (Teste)</option>
+        </select>
+      </div>
+
+      <p id="msg-erro-pedido" class="msg-erro" role="alert"></p>
+
+      <button type="button" class="btn-primario btn-largo" onclick="iniciarPagamento()">
+        Finalizar e Pagar
+      </button>
+
+      <!-- Painel de Acompanhamento de Status do Pedido -->
+      <div id="painel-status-pedido" class="status-pedido oculto">
+        <h3>Acompanhamento do Pedido <span id="numero-pedido-ativo"></span></h3>
+        <p id="detalhe-canal-pedido" class="texto-pequeno"></p>
+        <p id="resumo-itens-pagos" class="texto-pequeno"></p>
+        <ul class="lista-etapas" id="lista-etapas-status">
+          <li id="etapa-1" class="concluida">1. Pagamento Aprovado</li>
+          <li id="etapa-2">2. Em Preparo na Cozinha</li>
+          <li id="etapa-3">3. Pronto para Retirada / Entrega</li>
+          <li id="etapa-4">4. Pedido Retirado / Entregue (Concluído)</li>
+        </ul>
+        <button type="button" id="btn-avancar-status" class="btn-secundario btn-largo" onclick="avancarStatusPedido()">
+          Simular Avanço (Cozinha / Atendente)
+        </button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Rodapé com acesso rápido à LGPD -->
+  <footer class="rodape">
+    <div class="container rodape-flex">
+      <span>Rede Raízes do Nordeste &copy; 2026 - Protótipo Front-End Multicanal</span>
+      <a href="#" onclick="abrirModalLGPD(event)">Privacidade e Uso de Dados (LGPD)</a>
+    </div>
+  </footer>
+
+  <!-- Aviso Fixo de Cookies/LGPD no primeiro acesso -->
+  <div id="banner-lgpd-fixo" class="aviso-lgpd-fixo">
+    <div class="container aviso-lgpd-conteudo">
+      <p>
+        <strong>Transparência e LGPD (Lei nº 13.709/2018):</strong> Coletamos apenas nome, e-mail e CPF mediante seu consentimento expresso para identificação de pedidos e programa de pontos.
+      </p>
+      <div class="acoes-banner-lgpd">
+        <button type="button" class="btn-secundario" onclick="abrirModalLGPD(event)">Ler Política</button>
+        <button type="button" class="btn-primario" onclick="aceitarAvisoInicialLGPD()">Entendi e Aceitar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Login / Cadastro -->
+  <div id="modal-conta" class="modal oculto" role="dialog" aria-modal="true">
+    <div class="modal-caixa">
+      <div class="modal-topo">
+        <h3>Identificação e Fidelidade</h3>
+        <button type="button" class="btn-fechar" onclick="fecharModais()">&times;</button>
+      </div>
+
+      <div id="visao-deslogado">
+        <p class="texto-pequeno">Use a conta de demonstração ou faça um novo cadastro abaixo:</p>
+        <button type="button" class="btn-outline btn-largo" onclick="entrarContaDemo()">
+          Entrar com Conta Teste (Carlos Silva - 65 pts)
+        </button>
+
+        <hr class="divisor">
+
+        <form onsubmit="cadastrarCliente(event)">
+          <div class="campo-form">
+            <label for="cad-nome">Nome Completo *</label>
+            <input type="text" id="cad-nome" required placeholder="Ex: Maria Oliveira">
+          </div>
+          <div class="campo-form">
+            <label for="cad-cpf">CPF (11 dígitos) *</label>
+            <input type="text" id="cad-cpf" maxlength="11" required placeholder="Somente números">
+          </div>
+          <div class="campo-form">
+            <label for="cad-email">E-mail *</label>
+            <input type="email" id="cad-email" required placeholder="maria@email.com">
+          </div>
+          <label class="checkbox-lgpd">
+            <input type="checkbox" id="check-lgpd-cadastro">
+            <span>Autorizo o armazenamento dos meus dados cadastrais para o programa de fidelidade (LGPD). *</span>
+          </label>
+          <p id="msg-erro-cadastro" class="msg-erro"></p>
+          <button type="submit" class="btn-primario btn-largo">Criar Cadastro</button>
+        </form>
+      </div>
+
+      <div id="visao-logado" class="oculto">
+        <p><strong>Cliente:</strong> <span id="perfil-nome"></span></p>
+        <p><strong>CPF:</strong> <span id="perfil-cpf"></span></p>
+        <p><strong>Saldo de Pontos:</strong> <span id="perfil-pontos"></span> pts</p>
+        <button type="button" class="btn-secundario btn-largo" onclick="sairConta()">Sair da Conta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Política de Privacidade (LGPD) -->
+  <div id="modal-lgpd" class="modal oculto" role="dialog" aria-modal="true">
+    <div class="modal-caixa">
+      <div class="modal-topo">
+        <h3>Política de Privacidade e LGPD</h3>
+        <button type="button" class="btn-fechar" onclick="fecharModais()">&times;</button>
+      </div>
+      <div class="texto-lgpd">
+        <p><strong>1. Finalidade da Coleta:</strong> Os dados pessoais solicitados (Nome, E-mail e CPF) são utilizados exclusivamente para emissão de comprovante, identificação na retirada do pedido e gestão de pontos do Clube Raízes.</p>
+        <p><strong>2. Pagamentos Externos:</strong> Dados financeiros (cartão ou chave Pix) são processados diretamente por gateway certificado, sem armazenamento nos servidores da rede.</p>
+        <p><strong>3. Direitos do Titular (Art. 18 da LGPD):</strong> Você pode revogar seu consentimento e apagar seus dados armazenados localmente a qualquer momento.</p>
+      </div>
+      <button type="button" class="btn-perigo btn-largo" onclick="revogarDadosLGPD()">
+        Revogar Consentimento e Apagar Meus Dados
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal Simulação Gateway de Pagamento Externo -->
+  <div id="modal-pagamento" class="modal oculto" role="dialog" aria-modal="true">
+    <div class="modal-caixa texto-centro">
+      <h3>Processando Pagamento Externo</h3>
+      <p id="texto-status-gateway">Conectando ao serviço financeiro externo...</p>
+      <div class="barra-progresso"><div class="progresso-animado"></div></div>
+    </div>
+  </div>
+
+  <script src="dados.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
