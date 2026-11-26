@@ -1,4 +1,4 @@
-// Estado principal da aplicação Front-End
+// Sistema Front-End Raizes do Nordeste - Versao 1.1 (ajustes pos-teste)                                                                                                
 let canalAtual = "app";
 let unidadeAtual = "recife";
 let categoriaAtual = "Todos";
